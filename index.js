@@ -33,36 +33,35 @@ let isSending = false;
 // ================= LOGIN SYSTEM =================
 const ACCOUNTS_FILE = path.join(__dirname, "accounts.json");
 
-
-
-// Tambahkan baris ini 👇
-const accountsFile = path.join(__dirname, "accounts.json");
-
 // Fungsi untuk memuat data akun
 function loadAccounts() {
-  if (!fs.existsSync(accountsFile)) {
+  if (!fs.existsSync(ACCOUNTS_FILE)) {
     fs.writeFileSync(
-      accountsFile,
-      JSON.stringify([
-        {
-          username: "admin",
-          password: "123456",
-          devices: []
-        }
-      ], null, 2)
+      ACCOUNTS_FILE,
+      JSON.stringify(
+        [
+          {
+            username: "admin",
+            password: "123456",
+            devices: [],
+          },
+        ],
+        null,
+        2
+      )
     );
   }
 
-  const data = JSON.parse(fs.readFileSync(accountsFile));
+  const data = JSON.parse(fs.readFileSync(ACCOUNTS_FILE));
   return Array.isArray(data) ? data : data.accounts || [];
 }
 
-
-
+// Simpan akun ke file
 function saveAccounts(data) {
   fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(data, null, 2));
 }
 
+// ================= ROUTES LOGIN =================
 app.get("/login", (req, res) => {
   res.render("login", { error: null });
 });
@@ -79,9 +78,8 @@ app.post("/login", (req, res) => {
     return res.render("login", { error: "Username atau password salah!" });
   }
 
-  // Cek jumlah perangkat aktif
+  // Maksimum 2 perangkat login
   if (!user.devices) user.devices = [];
-
   const deviceId = req.sessionID;
 
   if (!user.devices.includes(deviceId)) {
@@ -111,7 +109,7 @@ app.get("/logout", (req, res) => {
   req.session.destroy(() => res.redirect("/login"));
 });
 
-// Middleware proteksi login
+// Middleware proteksi
 function requireLogin(req, res, next) {
   if (!req.session.user) return res.redirect("/login");
   next();
@@ -167,12 +165,20 @@ io.on("connection", (socket) => {
   socket.on("start-bot", async () => {
     if (client) return;
 
+    console.log("🟡 Memulai koneksi WhatsApp...");
+
     client = new Client({
-      authStrategy: new LocalAuth(),
-      puppeteer: { headless: true },
+      authStrategy: new LocalAuth({
+        dataPath: path.join(__dirname, ".wwebjs_auth"),
+      }),
+      puppeteer: {
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      },
     });
 
     client.on("qr", async (qr) => {
+      console.log("📱 QR Code baru diterima...");
       qrReady = true;
       qrData = await qrcode.toDataURL(qr);
       io.emit("qr", qrData);
@@ -181,11 +187,28 @@ io.on("connection", (socket) => {
     client.on("ready", () => {
       qrReady = false;
       isAuthenticated = true;
-      console.log("✅ WhatsApp siap!");
+      console.log("✅ WhatsApp siap digunakan!");
       io.emit("ready");
     });
 
-    client.initialize();
+    client.on("auth_failure", (msg) => {
+      console.error("❌ Autentikasi gagal:", msg);
+      io.emit("error", "Gagal autentikasi WhatsApp!");
+    });
+
+    client.on("disconnected", (reason) => {
+      console.log("⚠️ Terputus dari WhatsApp:", reason);
+      client = null;
+      isAuthenticated = false;
+      io.emit("disconnected");
+    });
+
+    try {
+      await client.initialize();
+    } catch (err) {
+      console.error("❌ Gagal inisialisasi client:", err.message);
+      io.emit("error", "Gagal memulai WhatsApp!");
+    }
   });
 
   socket.on("start-send", async (sessionData) => {
@@ -232,6 +255,8 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(3000, () => {
-  console.log("🚀 Server jalan di http://localhost:3000");
+// ================= SERVER =================
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`🚀 Server jalan di http://localhost:${PORT}`);
 });
