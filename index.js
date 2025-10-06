@@ -165,50 +165,43 @@ io.on("connection", (socket) => {
   socket.on("start-bot", async () => {
     if (client) return;
 
-    console.log("🟡 Memulai koneksi WhatsApp...");
-
     client = new Client({
-      authStrategy: new LocalAuth({
-        dataPath: path.join(__dirname, ".wwebjs_auth"),
-      }),
+      authStrategy: new LocalAuth(),
       puppeteer: {
         headless: true,
-        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+        args: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-extensions",
+          "--disable-gpu",
+          "--disable-dev-shm-usage"
+        ],
       },
     });
 
     client.on("qr", async (qr) => {
-      console.log("📱 QR Code baru diterima...");
       qrReady = true;
       qrData = await qrcode.toDataURL(qr);
+      console.log("📱 QR Code siap discan");
       io.emit("qr", qrData);
     });
 
     client.on("ready", () => {
       qrReady = false;
       isAuthenticated = true;
-      console.log("✅ WhatsApp siap digunakan!");
-      io.emit("ready");
+      console.log("✅ WhatsApp siap!");
+      io.emit("ready"); // kirim sinyal ke browser
+      io.emit("redirect", "/hasil"); // langsung redirect ke hasil
     });
 
     client.on("auth_failure", (msg) => {
-      console.error("❌ Autentikasi gagal:", msg);
-      io.emit("error", "Gagal autentikasi WhatsApp!");
-    });
-
-    client.on("disconnected", (reason) => {
-      console.log("⚠️ Terputus dari WhatsApp:", reason);
+      console.error("❌ Gagal autentikasi:", msg);
+      io.emit("error", "Gagal login WhatsApp, scan ulang QR!");
+      client.destroy();
       client = null;
-      isAuthenticated = false;
-      io.emit("disconnected");
     });
 
-    try {
-      await client.initialize();
-    } catch (err) {
-      console.error("❌ Gagal inisialisasi client:", err.message);
-      io.emit("error", "Gagal memulai WhatsApp!");
-    }
+    client.initialize();
   });
 
   socket.on("start-send", async (sessionData) => {
@@ -255,8 +248,10 @@ io.on("connection", (socket) => {
   });
 });
 
+
 // ================= SERVER =================
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 Server jalan di http://localhost:${PORT}`);
 });
+
