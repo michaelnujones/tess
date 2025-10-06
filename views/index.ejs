@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Setup Bot WA</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Setup Bot WhatsApp</h1>
+    <form action="/set" method="POST">
+      <label>Masukkan Nama Grup:</label>
+      <input type="text" name="grupName" placeholder="Contoh: Grup Alumni" required />
+
+      <label>Pilih jumlah pesan (3–5):</label>
+      <select name="jumlahPesan" required>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+      </select>
+
+      <button type="submit">Simpan & Lanjut</button>
+    </form>
+  </div>
+</body>
+</html>

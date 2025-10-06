@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Hasil Pengiriman</title>
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>📤 Mengirim Pesan ke <%= grupName %></h1>
+    <p>Pesan yang digunakan (acak):</p>
+    <ul>
+      <% pesanList.forEach(pesan => { %>
+        <li><%= pesan %></li>
+      <% }) %>
+    </ul>
+    <hr>
+    <div id="log"><b>Menunggu status pengiriman...</b></div>
+  </div>
+
+  <script>
+    const socket = io();
+
+    socket.emit("start-send", {
+      grupName: "<%= grupName %>",
+      pesanList: <%- JSON.stringify(pesanList) %>
+    });
+
+    socket.on("sent", (nomor) => {
+      const log = document.getElementById("log");
+      const p = document.createElement("p");
+      p.textContent = "✅ Pesan terkirim ke: " + nomor;
+      log.appendChild(p);
+    });
+
+    socket.on("done", () => {
+      const log = document.getElementById("log");
+      const done = document.createElement("p");
+      done.innerHTML = "<b>🎉 Semua pesan sudah terkirim!</b>";
+      log.appendChild(done);
+    });
+
+    socket.on("error", (msg) => {
+      const log = document.getElementById("log");
+      const err = document.createElement("p");
+      err.style.color = "red";
+      err.textContent = msg;
+      log.appendChild(err);
+    });
+  </script>
+</body>
+</html>

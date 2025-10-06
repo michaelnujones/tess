@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Scan QR WhatsApp</title>
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Hubungkan WhatsApp</h1>
+    <div id="status">Menunggu QR...</div>
+    <div id="loader" class="loader"></div>
+    <div id="qr"></div>
+  </div>
+
+  <script>
+    const socket = io();
+    socket.emit("start-bot");
+
+    socket.on("qr", (qrData) => {
+      document.getElementById("loader").style.display = "none";
+      document.getElementById("qr").innerHTML = `<img src="${qrData}" width="250"/>`;
+      document.getElementById("status").innerText = "📱 Silakan scan dengan WhatsApp Anda...";
+    });
+
+    socket.on("ready", () => {
+      document.getElementById("status").innerText = "✅ Berhasil tersambung!";
+      setTimeout(() => window.location.href = "/hasil", 2000);
+    });
+  </script>
+</body>
+</html>

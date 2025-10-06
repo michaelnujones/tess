@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Isi Pesan</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Isi Pesan untuk Bot</h1>
+    <form action="/simpan-pesan" method="POST">
+      <% for(let i=1; i<=jumlahPesan; i++){ %>
+        <input type="text" name="pesan<%=i%>" placeholder="Pesan <%=i%>" required>
+      <% } %>
+      <button type="submit">Simpan & Lanjut</button>
+    </form>
+  </div>
+</body>
+</html>
