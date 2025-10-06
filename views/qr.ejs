@@ -14,20 +14,29 @@
     <div id="qr"></div>
   </div>
 
-  <script>
-    const socket = io();
-    socket.emit("start-bot");
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
 
-    socket.on("qr", (qrData) => {
-      document.getElementById("loader").style.display = "none";
-      document.getElementById("qr").innerHTML = `<img src="${qrData}" width="250"/>`;
-      document.getElementById("status").innerText = "📱 Silakan scan dengan WhatsApp Anda...";
-    });
+  socket.emit("start-bot");
 
-    socket.on("ready", () => {
-      document.getElementById("status").innerText = "✅ Berhasil tersambung!";
-      setTimeout(() => window.location.href = "/hasil", 2000);
-    });
-  </script>
+  socket.on("qr", (data) => {
+    document.getElementById("qrcode").src = data;
+  });
+
+  socket.on("ready", () => {
+    document.getElementById("status").innerText = "✅ WhatsApp Siap!";
+  });
+
+  socket.on("redirect", (url) => {
+    window.location.href = url;
+  });
+
+  socket.on("error", (msg) => {
+    alert(msg);
+  });
+</script>
+
 </body>
 </html>
+
