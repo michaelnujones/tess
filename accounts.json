@@ -2,8 +2,16 @@
   {
     "username": "admin",
     "password": "123456",
-    "devices": [
-      "exQ-4tGgMILQj5NsAmFxOoaWTQQBsEnq"
-    ]
+    "devices": []
+  },
+  {
+    "username": "iki",
+    "password": "123456",
+    "devices": []
+  },
+  {
+    "username": "michael",
+    "password": "123456",
+    "devices": []
   }
 ]
